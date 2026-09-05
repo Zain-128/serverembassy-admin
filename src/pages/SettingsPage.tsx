@@ -1,8 +1,9 @@
 import { type FormEvent, useEffect, useState } from "react";
+import { Skeleton } from "@/components/Skeleton";
 import { useGetSettingsQuery, useUpdateSettingsMutation } from "@/store/adminApi";
 
 export default function SettingsPage() {
-  const { data: settings } = useGetSettingsQuery();
+  const { data: settings, isLoading } = useGetSettingsQuery();
   const [updateSettings] = useUpdateSettingsMutation();
 
   const [storeName, setStoreName] = useState("");
@@ -48,6 +49,20 @@ export default function SettingsPage() {
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
+
+  if (isLoading)
+    return (
+      <div className="max-w-xl">
+        <h1 className="text-2xl font-bold text-navy">Settings</h1>
+        <div className="mt-6 space-y-3 rounded-2xl bg-white p-6 ring-1 ring-line">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-28 w-full" />
+        </div>
+      </div>
+    );
 
   return (
     <div className="max-w-xl">

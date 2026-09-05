@@ -154,8 +154,11 @@ export const adminApi = createApi({
       invalidatesTags: ["Products", "Dashboard"],
     }),
 
-    getCategories: builder.query<ApiCategory[], void>({
-      query: () => "/admin/categories",
+    getCategories: builder.query<
+      Paginated<ApiCategory>,
+      { page?: number; limit?: number } | void
+    >({
+      query: (params) => `/admin/categories${toQuery({ page: params?.page, limit: params?.limit })}`,
       providesTags: ["Categories"],
     }),
     createCategory: builder.mutation<ApiCategory, Record<string, unknown>>({
@@ -171,8 +174,11 @@ export const adminApi = createApi({
       invalidatesTags: ["Categories"],
     }),
 
-    getBrands: builder.query<ApiBrand[], void>({
-      query: () => "/admin/brands",
+    getBrands: builder.query<
+      Paginated<ApiBrand>,
+      { page?: number; limit?: number } | void
+    >({
+      query: (params) => `/admin/brands${toQuery({ page: params?.page, limit: params?.limit })}`,
       providesTags: ["Brands"],
     }),
     createBrand: builder.mutation<ApiBrand, Record<string, unknown>>({
@@ -188,8 +194,11 @@ export const adminApi = createApi({
       invalidatesTags: ["Brands"],
     }),
 
-    getBanners: builder.query<ApiBanner[], void>({
-      query: () => "/admin/banners",
+    getBanners: builder.query<
+      Paginated<ApiBanner>,
+      { page?: number; limit?: number } | void
+    >({
+      query: (params) => `/admin/banners${toQuery({ page: params?.page, limit: params?.limit })}`,
       providesTags: ["Banners"],
     }),
     createBanner: builder.mutation<ApiBanner, Record<string, unknown>>({
@@ -205,8 +214,11 @@ export const adminApi = createApi({
       invalidatesTags: ["Banners"],
     }),
 
-    getPages: builder.query<ApiCmsPage[], void>({
-      query: () => "/admin/pages",
+    getPages: builder.query<
+      Paginated<ApiCmsPage>,
+      { page?: number; limit?: number } | void
+    >({
+      query: (params) => `/admin/pages${toQuery({ page: params?.page, limit: params?.limit })}`,
       providesTags: ["Pages"],
     }),
     updatePage: builder.mutation<ApiCmsPage, { slug: string; body: Record<string, unknown> }>({
@@ -248,8 +260,11 @@ export const adminApi = createApi({
       invalidatesTags: ["Orders"],
     }),
 
-    getQuotes: builder.query<ApiQuote[], void>({
-      query: () => "/admin/quotes",
+    getQuotes: builder.query<
+      Paginated<ApiQuote>,
+      { page?: number; limit?: number } | void
+    >({
+      query: (params) => `/admin/quotes${toQuery({ page: params?.page, limit: params?.limit })}`,
       providesTags: ["Quotes"],
     }),
     updateQuoteStatus: builder.mutation<ApiQuote, { id: string; status: string }>({
@@ -261,8 +276,11 @@ export const adminApi = createApi({
       invalidatesTags: ["Quotes", "Dashboard"],
     }),
 
-    getCustomers: builder.query<ApiCustomer[], void>({
-      query: () => "/admin/customers",
+    getCustomers: builder.query<
+      Paginated<ApiCustomer>,
+      { page?: number; limit?: number } | void
+    >({
+      query: (params) => `/admin/customers${toQuery({ page: params?.page, limit: params?.limit })}`,
       providesTags: ["Customers"],
     }),
     updateCustomerTaxExempt: builder.mutation<ApiCustomer, { id: string; taxExempt: string }>({
@@ -283,8 +301,11 @@ export const adminApi = createApi({
       invalidatesTags: ["Settings"],
     }),
 
-    getCoupons: builder.query<ApiCoupon[], void>({
-      query: () => "/admin/coupons",
+    getCoupons: builder.query<
+      Paginated<ApiCoupon>,
+      { page?: number; limit?: number } | void
+    >({
+      query: (params) => `/admin/coupons${toQuery({ page: params?.page, limit: params?.limit })}`,
       providesTags: ["Coupons"],
     }),
     createCoupon: builder.mutation<ApiCoupon, Record<string, unknown>>({
@@ -309,8 +330,11 @@ export const adminApi = createApi({
       invalidatesTags: ["Pages"],
     }),
 
-    getMessages: builder.query<ApiContactMessage[], void>({
-      query: () => "/admin/messages",
+    getMessages: builder.query<
+      Paginated<ApiContactMessage>,
+      { page?: number; limit?: number } | void
+    >({
+      query: (params) => `/admin/messages${toQuery({ page: params?.page, limit: params?.limit })}`,
       providesTags: ["Messages"],
     }),
     updateMessageRead: builder.mutation<ApiContactMessage, { id: string; read: boolean }>({

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { formatMoney, titleCaseStatus } from "@/lib/format";
 import { useGetOrdersQuery } from "@/store/adminApi";
+import { TableSkeleton } from "@/components/Skeleton";
+import Pagination from "@/components/Pagination";
 
 const STATUSES = [
   ["", "All statuses"],
@@ -16,10 +18,12 @@ const STATUSES = [
 export default function OrdersPage() {
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState("");
-  const { data } = useGetOrdersQuery({ page, status: status || undefined });
+  const { data, isLoading } = useGetOrdersQuery({ page, status: status || undefined });
 
   const orders = data?.items ?? [];
   const totalPages = data?.totalPages ?? 1;
+
+  if (isLoading && !data) return <TableSkeleton cols={5} rows={6} className="mt-6" />;
 
   return (
     <div>
@@ -86,30 +90,14 @@ export default function OrdersPage() {
             )}
           </tbody>
         </table>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          total={data?.total ?? 0}
+          onChange={(p) => setPage(p)}
+          label="orders"
+        />
       </div>
-      {totalPages > 1 ? (
-        <div className="mt-4 flex items-center gap-2">
-          <button
-            type="button"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="rounded-lg border border-line bg-white px-3 py-1.5 text-sm disabled:opacity-40"
-          >
-            Previous
-          </button>
-          <span className="text-sm text-muted">
-            Page {page}/{totalPages}
-          </span>
-          <button
-            type="button"
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            className="rounded-lg border border-line bg-white px-3 py-1.5 text-sm disabled:opacity-40"
-          >
-            Next
-          </button>
-        </div>
-      ) : null}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useState } from "react";
+import { Skeleton } from "@/components/Skeleton";
 import { formatMoney } from "@/lib/format";
 import { useGetSettingsQuery, useUpdateSettingsMutation } from "@/store/adminApi";
 
@@ -21,7 +22,17 @@ export default function ShippingPage() {
     setSaved(value);
   }
 
-  if (isLoading) return <p className="text-muted">Loading…</p>;
+  if (isLoading)
+    return (
+      <div className="max-w-xl">
+        <h1 className="text-2xl font-bold text-navy">Shipping</h1>
+        <div className="mt-6 rounded-2xl bg-white p-6 ring-1 ring-line">
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="mt-3 h-10 w-full" />
+          <Skeleton className="mt-4 h-9 w-28" />
+        </div>
+      </div>
+    );
 
   return (
     <div className="max-w-xl">

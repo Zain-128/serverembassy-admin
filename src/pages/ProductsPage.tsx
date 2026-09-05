@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { formatMoney } from "@/lib/format";
 import {
@@ -5,19 +6,36 @@ import {
   useGetCategoriesQuery,
   useGetProductsQuery,
 } from "@/store/adminApi";
+import { TableSkeleton } from "@/components/Skeleton";
+import Pagination from "@/components/Pagination";
 
 export default function ProductsPage() {
-  const { data: productRes, isLoading } = useGetProductsQuery({ limit: 100 });
-  const { data: categories = [] } = useGetCategoriesQuery();
+  const [page, setPage] = useState(1);
+  const [q, setQ] = useState("");
+  const [submittedQ, setSubmittedQ] = useState("");
+  const { data, isLoading } = useGetProductsQuery({
+    page,
+    limit: 20,
+    q: submittedQ || undefined,
+  });
+  const { data: categoryRes } = useGetCategoriesQuery();
+  const categories = categoryRes?.items ?? [];
   const [deleteProduct] = useDeleteProductMutation();
-  const products = productRes?.items ?? [];
+  const items = data?.items ?? [];
+  const totalPages = data?.totalPages ?? 1;
 
   async function remove(id: string) {
     if (!confirm("Delete this product?")) return;
     await deleteProduct(id);
   }
 
-  if (isLoading) return <p className="text-muted">Loading products…</p>;
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    setPage(1);
+    setSubmittedQ(q);
+  }
+
+  if (isLoading) return <TableSkeleton cols={6} rows={6} className="mt-6" />;
 
   return (
     <div>
@@ -35,6 +53,18 @@ export default function ProductsPage() {
           </Link>
         </div>
       </div>
+      <form onSubmit={handleSearch} className="mt-4 flex gap-2">
+        <input
+          type="text"
+          placeholder="Search products…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          className="rounded-lg border border-line bg-white px-3 py-2 text-sm"
+        />
+        <button type="submit" className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white">
+          Search
+        </button>
+      </form>
       <div className="mt-6 overflow-hidden rounded-2xl bg-white ring-1 ring-line">
         <table className="w-full text-sm">
           <thead className="bg-page text-left text-muted">
@@ -49,30 +79,39 @@ export default function ProductsPage() {
             </tr>
           </thead>
           <tbody>
-            {products.map((product) => (
-              <tr key={product.id} className="border-t border-line">
-                <td className="px-4 py-3 font-mono text-xs">{product.sku}</td>
-                <td className="px-4 py-3">{product.title}</td>
-                <td className="px-4 py-3">
-                  {categories.find((c) => c.id === product.categoryId)?.name ?? "—"}
-                </td>
-                <td className="px-4 py-3">{formatMoney(product.price)}</td>
-                <td className="px-4 py-3">{product.stock}</td>
-                <td className="px-4 py-3">
-                  {product.published || product.status === "published" ? "Published" : "Draft"}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <Link to={`/products/${product.id}`} className="text-brand">
-                    Edit
-                  </Link>
-                  <button type="button" className="ml-3 text-sale" onClick={() => remove(product.id)}>
-                    Delete
-                  </button>
+            {items.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center text-muted">
+                  No products yet. Use Import or create one.
                 </td>
               </tr>
-            ))}
+            ) : (
+              items.map((product) => (
+                <tr key={product.id} className="border-t border-line">
+                  <td className="px-4 py-3 font-mono text-xs">{product.sku}</td>
+                  <td className="px-4 py-3">{product.title}</td>
+                  <td className="px-4 py-3">
+                    {categories.find((c) => c.id === product.categoryId)?.name ?? "—"}
+                  </td>
+                  <td className="px-4 py-3">{formatMoney(product.price)}</td>
+                  <td className="px-4 py-3">{product.stock}</td>
+                  <td className="px-4 py-3">
+                    {product.published || product.status === "published" ? "Published" : "Draft"}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <Link to={`/products/${product.id}`} className="text-brand">
+                      Edit
+                    </Link>
+                    <button type="button" className="ml-3 text-sale" onClick={() => remove(product.id)}>
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
+        <Pagination page={page} totalPages={totalPages} total={data?.total ?? 0} onChange={setPage} label="products" />
       </div>
     </div>
   );

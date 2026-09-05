@@ -1,4 +1,6 @@
 import { type FormEvent, useState } from "react";
+import Pagination from "@/components/Pagination";
+import { CardSkeleton } from "@/components/Skeleton";
 import {
   useCreateBannerMutation,
   useDeleteBannerMutation,
@@ -8,8 +10,13 @@ import {
 } from "@/store/adminApi";
 
 export default function BannersPage() {
-  const { data: banners = [] } = useGetBannersQuery();
-  const { data: categories = [] } = useGetCategoriesQuery();
+  const [page, setPage] = useState(1);
+  const { data: banners, isLoading } = useGetBannersQuery({ page });
+  const bannerItems = banners?.items ?? [];
+  const totalPages = banners?.totalPages ?? 1;
+  const total = banners?.total ?? 0;
+  const { data: categories } = useGetCategoriesQuery();
+  const categoryItems = categories?.items ?? [];
   const [createBanner] = useCreateBannerMutation();
   const [updateBanner] = useUpdateBannerMutation();
   const [deleteBanner] = useDeleteBannerMutation();
@@ -25,7 +32,7 @@ export default function BannersPage() {
       ctaLabel: "Shop Now",
       href,
       size: "half",
-      sortOrder: banners.length + 1,
+      sortOrder: bannerItems.length + 1,
       active: true,
     });
     setTitle("");
@@ -55,7 +62,7 @@ export default function BannersPage() {
           value={href}
           onChange={(e) => setHref(e.target.value)}
         >
-          {categories.map((c) => (
+          {categoryItems.map((c) => (
             <option key={c.id} value={`/shop/${c.slug}`}>
               {c.name}
             </option>
@@ -65,40 +72,47 @@ export default function BannersPage() {
           Add banner
         </button>
       </form>
-      <div className="mt-6 space-y-3">
-        {banners.map((banner) => (
-          <div key={banner.id} className="flex items-center justify-between rounded-2xl bg-white p-4 ring-1 ring-line">
-            <div>
-              <p className="font-semibold">{banner.title}</p>
-              <p className="text-sm text-muted">
-                {banner.subtitle} · {banner.href} · {banner.size}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <label className="text-sm">
-                <input
-                  type="checkbox"
-                  className="mr-1"
-                  checked={banner.active ?? false}
-                  onChange={async (e) => {
-                    await updateBanner({ id: banner.id, body: { active: e.target.checked } });
-                  }}
-                />
-                Active
-              </label>
-              <button
-                type="button"
-                className="text-sm text-sale"
-                onClick={async () => {
-                  await deleteBanner(banner.id);
-                }}
-              >
-                Delete
-              </button>
-            </div>
+      {isLoading ? (
+        <CardSkeleton count={4} />
+      ) : (
+        <>
+          <div className="mt-6 space-y-3">
+            {bannerItems.map((banner) => (
+              <div key={banner.id} className="flex items-center justify-between rounded-2xl bg-white p-4 ring-1 ring-line">
+                <div>
+                  <p className="font-semibold">{banner.title}</p>
+                  <p className="text-sm text-muted">
+                    {banner.subtitle} · {banner.href} · {banner.size}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-sm">
+                    <input
+                      type="checkbox"
+                      className="mr-1"
+                      checked={banner.active ?? false}
+                      onChange={async (e) => {
+                        await updateBanner({ id: banner.id, body: { active: e.target.checked } });
+                      }}
+                    />
+                    Active
+                  </label>
+                  <button
+                    type="button"
+                    className="text-sm text-sale"
+                    onClick={async () => {
+                      await deleteBanner(banner.id);
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+          <Pagination page={page} totalPages={totalPages} total={total} onChange={setPage} label="banners" />
+        </>
+      )}
     </div>
   );
 }

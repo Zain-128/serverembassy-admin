@@ -1,13 +1,26 @@
 import { Link } from "react-router-dom";
 import { formatMoney, titleCaseStatus } from "@/lib/format";
 import { useGetDashboardQuery, useGetOrdersQuery } from "@/store/adminApi";
+import { Skeleton, TableSkeleton } from "@/components/Skeleton";
 
 export default function DashboardPage() {
   const { data: stats, isLoading } = useGetDashboardQuery();
   const { data: orderList } = useGetOrdersQuery({ page: 1 });
   const orders = orderList?.items.slice(0, 5) ?? [];
 
-  if (isLoading || !stats) return <p className="text-muted">Loading dashboard…</p>;
+  if (isLoading || !stats)
+    return (
+      <div>
+        <h1 className="text-2xl font-bold text-navy">Dashboard</h1>
+        <p className="mt-1 text-sm text-muted">Loading dashboard…</p>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-2xl" />
+          ))}
+        </div>
+        <TableSkeleton cols={5} rows={5} className="mt-8" />
+      </div>
+    );
 
   return (
     <div>
@@ -37,30 +50,34 @@ export default function DashboardPage() {
             View all
           </Link>
         </div>
-        <table className="w-full text-sm">
-          <thead className="text-left text-muted">
-            <tr>
-              <th className="px-5 py-3">Order</th>
-              <th className="px-5 py-3">Email</th>
-              <th className="px-5 py-3">Status</th>
-              <th className="px-5 py-3">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((order) => (
-              <tr key={order.id} className="border-t border-line">
-                <td className="px-5 py-3 font-medium">
-                  <Link to={`/orders/${order.id}`} className="hover:text-brand">
-                    {order.orderNumber}
-                  </Link>
-                </td>
-                <td className="px-5 py-3">{order.email}</td>
-                <td className="px-5 py-3">{titleCaseStatus(order.status)}</td>
-                <td className="px-5 py-3">{formatMoney(order.total)}</td>
+        {orders.length === 0 ? (
+          <p className="px-5 py-8 text-center text-sm text-muted">No recent orders.</p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="text-left text-muted">
+              <tr>
+                <th className="px-5 py-3">Order</th>
+                <th className="px-5 py-3">Email</th>
+                <th className="px-5 py-3">Status</th>
+                <th className="px-5 py-3">Total</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {orders.map((order) => (
+                <tr key={order.id} className="border-t border-line">
+                  <td className="px-5 py-3 font-medium">
+                    <Link to={`/orders/${order.id}`} className="hover:text-brand">
+                      {order.orderNumber}
+                    </Link>
+                  </td>
+                  <td className="px-5 py-3">{order.email}</td>
+                  <td className="px-5 py-3">{titleCaseStatus(order.status)}</td>
+                  <td className="px-5 py-3">{formatMoney(order.total)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

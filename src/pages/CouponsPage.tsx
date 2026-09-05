@@ -1,4 +1,6 @@
 import { type FormEvent, useState } from "react";
+import Pagination from "@/components/Pagination";
+import { TableSkeleton } from "@/components/Skeleton";
 import {
   useCreateCouponMutation,
   useDeleteCouponMutation,
@@ -30,7 +32,11 @@ const emptyForm: CouponForm = {
 };
 
 export default function CouponsPage() {
-  const { data: coupons = [], isLoading } = useGetCouponsQuery();
+  const [page, setPage] = useState(1);
+  const { data: coupons, isLoading } = useGetCouponsQuery({ page });
+  const couponItems = coupons?.items ?? [];
+  const totalPages = coupons?.totalPages ?? 1;
+  const total = coupons?.total ?? 0;
   const [createCoupon] = useCreateCouponMutation();
   const [updateCoupon] = useUpdateCouponMutation();
   const [deleteCoupon] = useDeleteCouponMutation();
@@ -202,10 +208,13 @@ export default function CouponsPage() {
 
         <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-line">
           {isLoading ? (
-            <p className="p-5 text-sm text-muted">Loading coupons…</p>
-          ) : coupons.length === 0 ? (
+          <TableSkeleton rows={4} cols={5} />
+        ) : couponItems.length === 0 ? (
+          <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-line">
             <p className="p-5 text-sm text-muted">No coupons yet. Create one to get started.</p>
-          ) : (
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-line">
             <table className="w-full text-sm">
               <thead className="bg-page text-left text-muted">
                 <tr>
@@ -218,7 +227,7 @@ export default function CouponsPage() {
                 </tr>
               </thead>
               <tbody>
-                {coupons.map((coupon) => (
+                {couponItems.map((coupon) => (
                   <tr key={coupon.id} className="border-t border-line">
                     <td className="px-4 py-3 font-mono text-xs font-semibold text-navy">
                       {coupon.code}
@@ -248,7 +257,9 @@ export default function CouponsPage() {
                 ))}
               </tbody>
             </table>
-          )}
+            <Pagination page={page} totalPages={totalPages} total={total} onChange={setPage} label="coupons" />
+          </div>
+        )}
         </div>
       </div>
     </div>

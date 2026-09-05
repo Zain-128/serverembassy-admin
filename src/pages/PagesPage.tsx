@@ -1,4 +1,6 @@
 import { type FormEvent, useState } from "react";
+import Pagination from "@/components/Pagination";
+import { CardSkeleton } from "@/components/Skeleton";
 import {
   useCreatePageMutation,
   useDeletePageMutation,
@@ -7,7 +9,11 @@ import {
 } from "@/store/adminApi";
 
 export default function PagesPage() {
-  const { data: pages = [] } = useGetPagesQuery();
+  const [page, setPage] = useState(1);
+  const { data: pages, isLoading } = useGetPagesQuery({ page });
+  const pageItems = pages?.items ?? [];
+  const totalPages = pages?.totalPages ?? 1;
+  const total = pages?.total ?? 0;
   const [updatePage] = useUpdatePageMutation();
   const [createPage] = useCreatePageMutation();
   const [deletePage] = useDeletePageMutation();
@@ -64,28 +70,35 @@ export default function PagesPage() {
         {error ? <p className="text-sm text-sale">{error}</p> : null}
       </form>
 
-      <div className="mt-6 space-y-4">
-        {pages.map((page) => (
-          <article key={page.slug} className="rounded-2xl bg-white p-5 ring-1 ring-line">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="font-semibold">{page.title}</h2>
-                <p className="text-xs text-muted">/{page.slug}</p>
-              </div>
-              <button type="button" className="text-sm text-sale" onClick={() => remove(page.slug)}>
-                Delete
-              </button>
-            </div>
-            <textarea
-              className="mt-3 min-h-28 w-full rounded-lg border border-line px-3 py-2 text-sm"
-              defaultValue={page.body}
-              onBlur={async (e) => {
-                await updatePage({ slug: page.slug, body: { body: e.target.value } });
-              }}
-            />
-          </article>
-        ))}
-      </div>
+      {isLoading ? (
+        <CardSkeleton count={4} />
+      ) : (
+        <>
+          <div className="mt-6 space-y-4">
+            {pageItems.map((cmsPage) => (
+              <article key={cmsPage.slug} className="rounded-2xl bg-white p-5 ring-1 ring-line">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="font-semibold">{cmsPage.title}</h2>
+                    <p className="text-xs text-muted">/{cmsPage.slug}</p>
+                  </div>
+                  <button type="button" className="text-sm text-sale" onClick={() => remove(cmsPage.slug)}>
+                    Delete
+                  </button>
+                </div>
+                <textarea
+                  className="mt-3 min-h-28 w-full rounded-lg border border-line px-3 py-2 text-sm"
+                  defaultValue={cmsPage.body}
+                  onBlur={async (e) => {
+                    await updatePage({ slug: cmsPage.slug, body: { body: e.target.value } });
+                  }}
+                />
+              </article>
+            ))}
+          </div>
+          <Pagination page={page} totalPages={totalPages} total={total} onChange={setPage} label="pages" />
+        </>
+      )}
     </div>
   );
 }

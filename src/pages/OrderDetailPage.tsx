@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { formatMoney } from "@/lib/format";
+import { Skeleton } from "@/components/Skeleton";
 import {
   useAddShipmentMutation,
   useGetOrderQuery,
@@ -25,7 +26,17 @@ export default function OrderDetailPage() {
     }
   }, [order]);
 
-  if (isLoading || !order) return <p className="text-muted">Loading order…</p>;
+  if (isLoading)
+    return (
+      <div className="mt-6 overflow-hidden rounded-2xl bg-white ring-1 ring-line">
+        <div className="p-6 space-y-4">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+        </div>
+      </div>
+    );
+  if (!order) return <p className="text-muted">Order not found.</p>;
 
   return (
     <div className="max-w-3xl">
@@ -89,13 +100,21 @@ export default function OrderDetailPage() {
             </tr>
           </thead>
           <tbody>
-            {(order.items ?? []).map((item) => (
-              <tr key={item.sku} className="border-t border-line">
-                <td className="py-2">{item.sku}</td>
-                <td className="py-2">{item.qty}</td>
-                <td className="py-2">{formatMoney(item.unitPrice)}</td>
+            {(order.items ?? []).length === 0 ? (
+              <tr>
+                <td colSpan={3} className="py-4 text-sm text-muted">
+                  No line items.
+                </td>
               </tr>
-            ))}
+            ) : (
+              (order.items ?? []).map((item) => (
+                <tr key={item.sku} className="border-t border-line">
+                  <td className="py-2">{item.sku}</td>
+                  <td className="py-2">{item.qty}</td>
+                  <td className="py-2">{formatMoney(item.unitPrice)}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
         <p className="mt-4 font-bold">Total {formatMoney(order.total)}</p>

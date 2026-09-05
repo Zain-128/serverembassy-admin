@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { Skeleton } from "@/components/Skeleton";
 import { productFromApi, productToApi } from "@/lib/api";
 import {
   useCreateProductMutation,
@@ -48,11 +49,13 @@ export default function ProductFormPage() {
   const navigate = useNavigate();
   const isNew = !id || id === "new";
 
-  const { data: brands = [] } = useGetBrandsQuery();
-  const { data: categories = [] } = useGetCategoriesQuery();
+  const { data: brands } = useGetBrandsQuery();
+  const { data: categories } = useGetCategoriesQuery();
   const { data: product, isLoading: loadingProduct } = useGetProductQuery(id!, {
     skip: isNew || !id,
   });
+  const brandItems = brands?.items ?? [];
+  const categoryItems = categories?.items ?? [];
   const [createProduct, { isLoading: creating }] = useCreateProductMutation();
   const [updateProduct, { isLoading: updating }] = useUpdateProductMutation();
   const saving = creating || updating;
@@ -60,14 +63,14 @@ export default function ProductFormPage() {
   const [form, setForm] = useState<ProductForm>(emptyForm);
 
   useEffect(() => {
-    if (isNew && brands[0] && categories[0] && !form.brandId) {
+    if (isNew && brandItems[0] && categoryItems[0] && !form.brandId) {
       setForm((prev) => ({
         ...prev,
-        brandId: prev.brandId || brands[0].id,
-        categoryId: prev.categoryId || categories[0].id,
+        brandId: prev.brandId || brandItems[0].id,
+        categoryId: prev.categoryId || categoryItems[0].id,
       }));
     }
-  }, [isNew, brands, categories, form.brandId]);
+  }, [isNew, brandItems, categoryItems, form.brandId]);
 
   useEffect(() => {
     if (product) setForm(productFromApi(product));
@@ -81,7 +84,21 @@ export default function ProductFormPage() {
     navigate("/products");
   }
 
-  if (!isNew && loadingProduct) return <p className="text-muted">Loading product…</p>;
+  if (!isNew && loadingProduct)
+    return (
+      <div className="max-w-3xl">
+        <Skeleton className="h-8 w-48" />
+        <div className="mt-6 rounded-2xl bg-white p-6 ring-1 ring-line">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-24 w-full sm:col-span-2" />
+          </div>
+        </div>
+      </div>
+    );
 
   return (
     <form onSubmit={onSubmit} className="max-w-3xl">
@@ -112,7 +129,7 @@ export default function ProductFormPage() {
             value={form.brandId}
             onChange={(e) => setForm({ ...form, brandId: e.target.value })}
           >
-            {brands.map((b) => (
+            {brandItems.map((b) => (
               <option key={b.id} value={b.id}>
                 {b.name}
               </option>
@@ -126,7 +143,7 @@ export default function ProductFormPage() {
             value={form.categoryId}
             onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
           >
-            {categories.map((c) => (
+            {categoryItems.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>

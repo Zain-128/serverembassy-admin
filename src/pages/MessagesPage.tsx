@@ -1,3 +1,6 @@
+import { useState } from "react";
+import Pagination from "@/components/Pagination";
+import { CardSkeleton } from "@/components/Skeleton";
 import {
   useDeleteMessageMutation,
   useGetMessagesQuery,
@@ -5,7 +8,11 @@ import {
 } from "@/store/adminApi";
 
 export default function MessagesPage() {
-  const { data: messages = [], isLoading } = useGetMessagesQuery();
+  const [page, setPage] = useState(1);
+  const { data: messages, isLoading } = useGetMessagesQuery({ page });
+  const messageItems = messages?.items ?? [];
+  const totalPages = messages?.totalPages ?? 1;
+  const total = messages?.total ?? 0;
   const [updateRead] = useUpdateMessageReadMutation();
   const [deleteMessage] = useDeleteMessageMutation();
 
@@ -20,13 +27,13 @@ export default function MessagesPage() {
       <p className="mt-1 text-sm text-muted">Contact form submissions from the storefront.</p>
       <div className="mt-6 space-y-3">
         {isLoading ? (
-          <p className="text-sm text-muted">Loading messages…</p>
-        ) : messages.length === 0 ? (
+          <CardSkeleton count={3} />
+        ) : messageItems.length === 0 ? (
           <p className="rounded-2xl bg-white p-5 text-sm text-muted ring-1 ring-line">
             No messages yet.
           </p>
         ) : (
-          messages.map((message) => (
+          messageItems.map((message) => (
             <article
               key={message.id}
               className={`rounded-2xl bg-white p-5 ring-1 ${message.read ? "ring-line" : "ring-brand"}`}
@@ -63,6 +70,7 @@ export default function MessagesPage() {
           ))
         )}
       </div>
+      <Pagination page={page} totalPages={totalPages} total={total} onChange={setPage} label="messages" />
     </div>
   );
 }

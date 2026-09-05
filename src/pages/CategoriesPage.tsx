@@ -1,13 +1,18 @@
-import { type FormEvent, useState } from "react";
+import { useState } from "react";
 import {
   useCreateCategoryMutation,
   useDeleteCategoryMutation,
   useGetCategoriesQuery,
   useUpdateCategoryMutation,
 } from "@/store/adminApi";
+import { TableSkeleton } from "@/components/Skeleton";
+import Pagination from "@/components/Pagination";
 
 export default function CategoriesPage() {
-  const { data: categories = [] } = useGetCategoriesQuery();
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useGetCategoriesQuery({ page });
+  const categories = data?.items ?? [];
+  const totalPages = data?.totalPages ?? 1;
   const [createCategory] = useCreateCategoryMutation();
   const [updateCategory] = useUpdateCategoryMutation();
   const [deleteCategory] = useDeleteCategoryMutation();
@@ -15,7 +20,7 @@ export default function CategoriesPage() {
   const [parentId, setParentId] = useState("");
   const [homepage, setHomepage] = useState(true);
 
-  async function addCategory(event: FormEvent) {
+  async function addCategory(event: React.FormEvent) {
     event.preventDefault();
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
     await createCategory({
@@ -25,7 +30,7 @@ export default function CategoriesPage() {
       bannerTitle: name,
       bannerSubtitle: "Shop this category",
       showOnHomepage: homepage,
-      sortOrder: categories.length + 1,
+      sortOrder: (data?.total ?? 0) + 1,
     });
     setName("");
   }
@@ -34,7 +39,7 @@ export default function CategoriesPage() {
     <div>
       <h1 className="text-2xl font-bold text-navy">Categories</h1>
       <p className="text-sm text-muted">
-        Nested tree drives the storefront mega menu. Homepage banners use “show on homepage”.
+        Nested tree drives the storefront mega menu. Homepage banners use "show on homepage".
       </p>
       <form onSubmit={addCategory} className="mt-6 flex flex-wrap gap-3 rounded-2xl bg-white p-5 ring-1 ring-line">
         <input
@@ -64,54 +69,60 @@ export default function CategoriesPage() {
           Create
         </button>
       </form>
-      <div className="mt-6 overflow-hidden rounded-2xl bg-white ring-1 ring-line">
-        <table className="w-full text-sm">
-          <thead className="bg-page text-left text-muted">
-            <tr>
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Slug</th>
-              <th className="px-4 py-3">Parent</th>
-              <th className="px-4 py-3">Homepage</th>
-              <th className="px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody>
-            {categories.map((cat) => (
-              <tr key={cat.id} className="border-t border-line">
-                <td className="px-4 py-3 font-medium">{cat.name}</td>
-                <td className="px-4 py-3 font-mono text-xs">{cat.slug}</td>
-                <td className="px-4 py-3">
-                  {categories.find((c) => c.id === cat.parentId)?.name ?? "—"}
-                </td>
-                <td className="px-4 py-3">
-                  <input
-                    type="checkbox"
-                    checked={cat.showOnHomepage ?? false}
-                    onChange={async (e) => {
-                      await updateCategory({
-                        id: cat.id,
-                        body: { showOnHomepage: e.target.checked },
-                      });
-                    }}
-                  />
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <button
-                    type="button"
-                    className="text-sale"
-                    onClick={async () => {
-                      if (!confirm("Delete this category?")) return;
-                      await deleteCategory(cat.id);
-                    }}
-                  >
-                    Delete
-                  </button>
-                </td>
+
+      {isLoading ? (
+        <TableSkeleton cols={4} rows={5} className="mt-6" />
+      ) : (
+        <div className="mt-6 overflow-hidden rounded-2xl bg-white ring-1 ring-line">
+          <table className="w-full text-sm">
+            <thead className="bg-page text-left text-muted">
+              <tr>
+                <th className="px-4 py-3">Name</th>
+                <th className="px-4 py-3">Slug</th>
+                <th className="px-4 py-3">Parent</th>
+                <th className="px-4 py-3">Homepage</th>
+                <th className="px-4 py-3" />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {categories.map((cat) => (
+                <tr key={cat.id} className="border-t border-line">
+                  <td className="px-4 py-3 font-medium">{cat.name}</td>
+                  <td className="px-4 py-3 font-mono text-xs">{cat.slug}</td>
+                  <td className="px-4 py-3">
+                    {categories.find((c) => c.id === cat.parentId)?.name ?? "—"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={cat.showOnHomepage ?? false}
+                      onChange={async (e) => {
+                        await updateCategory({
+                          id: cat.id,
+                          body: { showOnHomepage: e.target.checked },
+                        });
+                      }}
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      type="button"
+                      className="text-sale"
+                      onClick={async () => {
+                        if (!confirm("Delete this category?")) return;
+                        await deleteCategory(cat.id);
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <Pagination page={page} totalPages={totalPages} total={data?.total ?? 0} onChange={setPage} label="categories" />
+        </div>
+      )}
     </div>
   );
 }

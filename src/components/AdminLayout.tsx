@@ -74,7 +74,6 @@ export default function AdminLayout() {
       <aside className="flex flex-col bg-navy text-white">
         <div className="border-b border-white/10 px-5 py-5">
           <Logo light />
-          <p className="mt-2 text-xs text-white/60">Admin Console</p>
         </div>
         <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-5">
           {visibleSections.map((section) => (

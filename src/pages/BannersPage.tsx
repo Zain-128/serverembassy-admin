@@ -8,6 +8,7 @@ import {
   useGetCategoriesQuery,
   useUpdateBannerMutation,
 } from "@/store/adminApi";
+import { useToast, getErrorMessage } from "@/components/Toast";
 
 export default function BannersPage() {
   const [page, setPage] = useState(1);
@@ -23,20 +24,26 @@ export default function BannersPage() {
   const [title, setTitle] = useState("");
   const [subtitle, setSubtitle] = useState("");
   const [href, setHref] = useState("/shop/network-switches");
+  const { toast } = useToast();
 
   async function add(event: FormEvent) {
     event.preventDefault();
-    await createBanner({
-      title,
-      subtitle,
-      ctaLabel: "Shop Now",
-      href,
-      size: "half",
-      sortOrder: bannerItems.length + 1,
-      active: true,
-    });
-    setTitle("");
-    setSubtitle("");
+    try {
+      await createBanner({
+        title,
+        subtitle,
+        ctaLabel: "Shop Now",
+        href,
+        size: "half",
+        sortOrder: bannerItems.length + 1,
+        active: true,
+      }).unwrap();
+      toast("Banner created", "success");
+      setTitle("");
+      setSubtitle("");
+    } catch (err) {
+      toast(getErrorMessage(err, "Could not create banner"), "error");
+    }
   }
 
   return (
@@ -92,7 +99,12 @@ export default function BannersPage() {
                       className="mr-1"
                       checked={banner.active ?? false}
                       onChange={async (e) => {
-                        await updateBanner({ id: banner.id, body: { active: e.target.checked } });
+                        try {
+                          await updateBanner({ id: banner.id, body: { active: e.target.checked } }).unwrap();
+                          toast("Status updated", "success");
+                        } catch (err) {
+                          toast(getErrorMessage(err, "Could not update banner"), "error");
+                        }
                       }}
                     />
                     Active
@@ -101,7 +113,12 @@ export default function BannersPage() {
                     type="button"
                     className="text-sm text-sale"
                     onClick={async () => {
-                      await deleteBanner(banner.id);
+                      try {
+                        await deleteBanner(banner.id).unwrap();
+                        toast("Banner deleted", "success");
+                      } catch (err) {
+                        toast(getErrorMessage(err, "Could not delete banner"), "error");
+                      }
                     }}
                   >
                     Delete

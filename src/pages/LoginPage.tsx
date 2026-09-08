@@ -1,28 +1,26 @@
 import { type FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/store/useAuth";
+import { useToast, getErrorMessage } from "@/components/Toast";
+import Logo from "@/components/Logo";
 
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [email, setEmail] = useState("admin@serverembassy.com");
   const [password, setPassword] = useState("admin123");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    setError("");
     setLoading(true);
     try {
       await login(email, password);
+      toast("Signed in", "success");
       navigate("/");
     } catch (e) {
-      const message =
-        e && typeof e === "object" && "data" in e
-          ? String((e as { data?: { error?: string } }).data?.error ?? "Login failed")
-          : "Login failed";
-      setError(message);
+      toast(getErrorMessage(e, "Login failed"), "error");
     } finally {
       setLoading(false);
     }
@@ -31,10 +29,9 @@ export default function LoginPage() {
   return (
     <div className="grid min-h-screen place-items-center bg-navy p-6">
       <form onSubmit={onSubmit} className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
-        <p className="text-sm font-semibold text-brand">Server Embassy</p>
-        <h1 className="mt-1 text-2xl font-bold text-navy">Admin sign in</h1>
+        <Logo />
+        <h1 className="mt-4 text-2xl font-bold text-navy">Admin sign in</h1>
         <p className="mt-1 text-sm text-muted">Sign in with your staff account.</p>
-        {error ? <p className="mt-3 text-sm text-sale">{error}</p> : null}
         <label className="mt-5 block text-sm">
           Email
           <input

@@ -1,9 +1,11 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { Skeleton } from "@/components/Skeleton";
 import { formatMoney } from "@/lib/format";
+import { useToast, getErrorMessage } from "@/components/Toast";
 import { useGetSettingsQuery, useUpdateSettingsMutation } from "@/store/adminApi";
 
 export default function ShippingPage() {
+  const { toast } = useToast();
   const { data: settings, isLoading } = useGetSettingsQuery();
   const [updateSettings] = useUpdateSettingsMutation();
   const [value, setValue] = useState(199);
@@ -18,8 +20,13 @@ export default function ShippingPage() {
 
   async function save(event: FormEvent) {
     event.preventDefault();
-    await updateSettings({ freeShippingThreshold: value });
-    setSaved(value);
+    try {
+      await updateSettings({ freeShippingThreshold: value }).unwrap();
+      setSaved(value);
+      toast("Shipping rule saved", "success");
+    } catch (err) {
+      toast(getErrorMessage(err, "Could not save shipping rule."), "error");
+    }
   }
 
   if (isLoading)

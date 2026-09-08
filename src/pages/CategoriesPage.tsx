@@ -7,6 +7,7 @@ import {
 } from "@/store/adminApi";
 import { TableSkeleton } from "@/components/Skeleton";
 import Pagination from "@/components/Pagination";
+import { useToast, getErrorMessage } from "@/components/Toast";
 
 export default function CategoriesPage() {
   const [page, setPage] = useState(1);
@@ -16,6 +17,7 @@ export default function CategoriesPage() {
   const [createCategory] = useCreateCategoryMutation();
   const [updateCategory] = useUpdateCategoryMutation();
   const [deleteCategory] = useDeleteCategoryMutation();
+  const { toast } = useToast();
   const [name, setName] = useState("");
   const [parentId, setParentId] = useState("");
   const [homepage, setHomepage] = useState(true);
@@ -23,16 +25,21 @@ export default function CategoriesPage() {
   async function addCategory(event: React.FormEvent) {
     event.preventDefault();
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    await createCategory({
-      slug,
-      name,
-      parentId: parentId || null,
-      bannerTitle: name,
-      bannerSubtitle: "Shop this category",
-      showOnHomepage: homepage,
-      sortOrder: (data?.total ?? 0) + 1,
-    });
-    setName("");
+    try {
+      await createCategory({
+        slug,
+        name,
+        parentId: parentId || null,
+        bannerTitle: name,
+        bannerSubtitle: "Shop this category",
+        showOnHomepage: homepage,
+        sortOrder: (data?.total ?? 0) + 1,
+      }).unwrap();
+      toast("Category created", "success");
+      setName("");
+    } catch (err) {
+      toast(getErrorMessage(err, "Could not create category"), "error");
+    }
   }
 
   return (
@@ -97,10 +104,15 @@ export default function CategoriesPage() {
                       type="checkbox"
                       checked={cat.showOnHomepage ?? false}
                       onChange={async (e) => {
-                        await updateCategory({
-                          id: cat.id,
-                          body: { showOnHomepage: e.target.checked },
-                        });
+                        try {
+                          await updateCategory({
+                            id: cat.id,
+                            body: { showOnHomepage: e.target.checked },
+                          }).unwrap();
+                          toast("Status updated", "success");
+                        } catch (err) {
+                          toast(getErrorMessage(err, "Could not update category"), "error");
+                        }
                       }}
                     />
                   </td>
@@ -110,7 +122,12 @@ export default function CategoriesPage() {
                       className="text-sale"
                       onClick={async () => {
                         if (!confirm("Delete this category?")) return;
-                        await deleteCategory(cat.id);
+                        try {
+                          await deleteCategory(cat.id).unwrap();
+                          toast("Category deleted", "success");
+                        } catch (err) {
+                          toast(getErrorMessage(err, "Could not delete category"), "error");
+                        }
                       }}
                     >
                       Delete

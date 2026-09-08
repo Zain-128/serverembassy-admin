@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Pagination from "@/components/Pagination";
 import { CardSkeleton } from "@/components/Skeleton";
+import { useToast, getErrorMessage } from "@/components/Toast";
 import {
   useDeleteMessageMutation,
   useGetMessagesQuery,
@@ -8,6 +9,7 @@ import {
 } from "@/store/adminApi";
 
 export default function MessagesPage() {
+  const { toast } = useToast();
   const [page, setPage] = useState(1);
   const { data: messages, isLoading } = useGetMessagesQuery({ page });
   const messageItems = messages?.items ?? [];
@@ -18,7 +20,12 @@ export default function MessagesPage() {
 
   async function remove(id: string) {
     if (!confirm("Delete this message?")) return;
-    await deleteMessage(id);
+    try {
+      await deleteMessage(id).unwrap();
+      toast("Message deleted", "success");
+    } catch (err) {
+      toast(getErrorMessage(err, "Could not delete message."), "error");
+    }
   }
 
   return (
@@ -56,7 +63,14 @@ export default function MessagesPage() {
                   <button
                     type="button"
                     className="text-brand"
-                    onClick={() => updateRead({ id: message.id, read: !message.read })}
+                    onClick={async () => {
+                      try {
+                        await updateRead({ id: message.id, read: !message.read }).unwrap();
+                        toast(message.read ? "Marked unread" : "Marked read", "success");
+                      } catch (err) {
+                        toast(getErrorMessage(err, "Could not update message."), "error");
+                      }
+                    }}
                   >
                     {message.read ? "Mark unread" : "Mark read"}
                   </button>

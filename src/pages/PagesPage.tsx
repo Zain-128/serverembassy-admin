@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from "react";
 import Pagination from "@/components/Pagination";
 import { CardSkeleton } from "@/components/Skeleton";
+import { useToast, getErrorMessage } from "@/components/Toast";
 import {
   useCreatePageMutation,
   useDeletePageMutation,
@@ -9,6 +10,7 @@ import {
 } from "@/store/adminApi";
 
 export default function PagesPage() {
+  const { toast } = useToast();
   const [page, setPage] = useState(1);
   const { data: pages, isLoading } = useGetPagesQuery({ page });
   const pageItems = pages?.items ?? [];
@@ -20,23 +22,27 @@ export default function PagesPage() {
 
   const [slug, setSlug] = useState("");
   const [title, setTitle] = useState("");
-  const [error, setError] = useState("");
 
   async function onCreate(e: FormEvent) {
     e.preventDefault();
-    setError("");
     try {
       await createPage({ slug, title, body: "", published: true }).unwrap();
       setSlug("");
       setTitle("");
-    } catch {
-      setError("Could not create page. The slug may already exist.");
+      toast("Page created", "success");
+    } catch (err) {
+      toast(getErrorMessage(err, "Could not create page. The slug may already exist."), "error");
     }
   }
 
   async function remove(slugName: string) {
     if (!confirm(`Delete page /${slugName}?`)) return;
-    await deletePage(slugName);
+    try {
+      await deletePage(slugName).unwrap();
+      toast("Page deleted", "success");
+    } catch (err) {
+      toast(getErrorMessage(err, "Could not delete page."), "error");
+    }
   }
 
   return (
@@ -67,7 +73,6 @@ export default function PagesPage() {
         <button type="submit" className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white">
           Create page
         </button>
-        {error ? <p className="text-sm text-sale">{error}</p> : null}
       </form>
 
       {isLoading ? (
@@ -90,7 +95,12 @@ export default function PagesPage() {
                   className="mt-3 min-h-28 w-full rounded-lg border border-line px-3 py-2 text-sm"
                   defaultValue={cmsPage.body}
                   onBlur={async (e) => {
-                    await updatePage({ slug: cmsPage.slug, body: { body: e.target.value } });
+                    try {
+                      await updatePage({ slug: cmsPage.slug, body: { body: e.target.value } }).unwrap();
+                      toast("Page saved", "success");
+                    } catch (err) {
+                      toast(getErrorMessage(err, "Could not save page."), "error");
+                    }
                   }}
                 />
               </article>

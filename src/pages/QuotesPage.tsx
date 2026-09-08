@@ -2,10 +2,12 @@ import { useState } from "react";
 import { useGetQuotesQuery, useUpdateQuoteStatusMutation } from "@/store/adminApi";
 import { TableSkeleton } from "@/components/Skeleton";
 import Pagination from "@/components/Pagination";
+import { useToast, getErrorMessage } from "@/components/Toast";
 
 const statuses = ["new", "contacted", "quoted", "won", "lost"];
 
 export default function QuotesPage() {
+  const { toast } = useToast();
   const [page, setPage] = useState(1);
   const { data, isLoading } = useGetQuotesQuery({ page });
   const quotes = data?.items ?? [];
@@ -57,7 +59,12 @@ export default function QuotesPage() {
                         className="rounded-lg border border-line px-2 py-1"
                         value={quote.status}
                         onChange={async (e) => {
-                          await updateStatus({ id: quote.id, status: e.target.value });
+                          try {
+                            await updateStatus({ id: quote.id, status: e.target.value }).unwrap();
+                            toast("Quote status updated", "success");
+                          } catch (err) {
+                            toast(getErrorMessage(err, "Could not update quote status."), "error");
+                          }
                         }}
                       >
                         {statuses.map((s) => (

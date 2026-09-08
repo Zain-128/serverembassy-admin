@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ReduxProvider } from "@/store/useAuth";
+import { ToastProvider } from "@/components/Toast";
 import AdminLayout from "@/components/AdminLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import LoginPage from "@/pages/LoginPage";
@@ -23,7 +24,8 @@ import MessagesPage from "@/pages/MessagesPage";
 export default function App() {
   return (
     <ReduxProvider>
-      <BrowserRouter>
+      <ToastProvider>
+        <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route element={<ProtectedRoute />}>
@@ -49,7 +51,8 @@ export default function App() {
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </BrowserRouter>
+</BrowserRouter>
+      </ToastProvider>
     </ReduxProvider>
   );
 }

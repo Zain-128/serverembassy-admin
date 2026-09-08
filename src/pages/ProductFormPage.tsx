@@ -9,6 +9,7 @@ import {
   useGetProductQuery,
   useUpdateProductMutation,
 } from "@/store/adminApi";
+import { useToast, getErrorMessage } from "@/components/Toast";
 
 type ProductForm = ReturnType<typeof productFromApi>;
 
@@ -58,6 +59,7 @@ export default function ProductFormPage() {
   const categoryItems = categories?.items ?? [];
   const [createProduct, { isLoading: creating }] = useCreateProductMutation();
   const [updateProduct, { isLoading: updating }] = useUpdateProductMutation();
+  const { toast } = useToast();
   const saving = creating || updating;
 
   const [form, setForm] = useState<ProductForm>(emptyForm);
@@ -79,9 +81,14 @@ export default function ProductFormPage() {
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     const payload = productToApi(form);
-    if (isNew) await createProduct(payload).unwrap();
-    else await updateProduct({ id: id!, body: payload }).unwrap();
-    navigate("/products");
+    try {
+      if (isNew) await createProduct(payload).unwrap();
+      else await updateProduct({ id: id!, body: payload }).unwrap();
+      toast(isNew ? "Product created" : "Product updated", "success");
+      navigate("/products");
+    } catch (err) {
+      toast(getErrorMessage(err, "Could not save product"), "error");
+    }
   }
 
   if (!isNew && loadingProduct)

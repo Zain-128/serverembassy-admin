@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from "react";
 import Pagination from "@/components/Pagination";
 import { TableSkeleton } from "@/components/Skeleton";
+import { useToast, getErrorMessage } from "@/components/Toast";
 import {
   useCreateCouponMutation,
   useDeleteCouponMutation,
@@ -32,6 +33,7 @@ const emptyForm: CouponForm = {
 };
 
 export default function CouponsPage() {
+  const { toast } = useToast();
   const [page, setPage] = useState(1);
   const { data: coupons, isLoading } = useGetCouponsQuery({ page });
   const couponItems = coupons?.items ?? [];
@@ -43,7 +45,6 @@ export default function CouponsPage() {
 
   const [form, setForm] = useState<CouponForm>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [error, setError] = useState("");
 
   function toPayload(f: CouponForm) {
     const payload: Record<string, unknown> = {
@@ -71,25 +72,33 @@ export default function CouponsPage() {
       active: c.active ?? true,
     });
     setEditingId(c.id);
-    setError("");
   }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    setError("");
     try {
-      if (editingId) await updateCoupon({ id: editingId, body: toPayload(form) }).unwrap();
-      else await createCoupon(toPayload(form)).unwrap();
+      if (editingId) {
+        await updateCoupon({ id: editingId, body: toPayload(form) }).unwrap();
+        toast("Coupon updated", "success");
+      } else {
+        await createCoupon(toPayload(form)).unwrap();
+        toast("Coupon created", "success");
+      }
       setForm(emptyForm);
       setEditingId(null);
-    } catch {
-      setError("Could not save coupon. Check the fields and API connection.");
+    } catch (err) {
+      toast(getErrorMessage(err, "Could not save coupon. Check the fields and API connection."), "error");
     }
   }
 
   async function remove(id: string, code: string) {
     if (!confirm(`Delete coupon ${code}?`)) return;
-    await deleteCoupon(id);
+    try {
+      await deleteCoupon(id).unwrap();
+      toast("Coupon deleted", "success");
+    } catch (err) {
+      toast(getErrorMessage(err, "Could not delete coupon."), "error");
+    }
   }
 
   return (
@@ -102,7 +111,6 @@ export default function CouponsPage() {
       <div className="mt-6 grid gap-6 lg:grid-cols-[320px_1fr]">
         <form onSubmit={onSubmit} className="h-fit space-y-3 rounded-2xl bg-white p-5 ring-1 ring-line">
           <h2 className="font-semibold">{editingId ? "Edit coupon" : "New coupon"}</h2>
-          {error ? <p className="text-sm text-sale">{error}</p> : null}
           <label className="block text-sm">
             Code
             <input
@@ -196,7 +204,6 @@ export default function CouponsPage() {
                 onClick={() => {
                   setForm(emptyForm);
                   setEditingId(null);
-                  setError("");
                 }}
                 className="rounded-lg border border-line px-4 py-2 text-sm"
               >

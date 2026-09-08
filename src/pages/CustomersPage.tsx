@@ -2,11 +2,13 @@ import { useState } from "react";
 import Pagination from "@/components/Pagination";
 import { TableSkeleton } from "@/components/Skeleton";
 import { titleCaseTaxExempt } from "@/lib/format";
+import { useToast, getErrorMessage } from "@/components/Toast";
 import { useGetCustomersQuery, useUpdateCustomerTaxExemptMutation } from "@/store/adminApi";
 
 const taxOptions = ["none", "pending", "approved", "rejected"];
 
 export default function CustomersPage() {
+  const { toast } = useToast();
   const [page, setPage] = useState(1);
   const { data: customers, isLoading } = useGetCustomersQuery({ page });
   const customerItems = customers?.items ?? [];
@@ -44,7 +46,12 @@ export default function CustomersPage() {
                         className="rounded-lg border border-line px-2 py-1"
                         value={customer.taxExempt}
                         onChange={async (e) => {
-                          await updateTaxExempt({ id: customer.id, taxExempt: e.target.value });
+                          try {
+                            await updateTaxExempt({ id: customer.id, taxExempt: e.target.value }).unwrap();
+                            toast("Tax exemption updated", "success");
+                          } catch (err) {
+                            toast(getErrorMessage(err, "Could not update tax exemption."), "error");
+                          }
                         }}
                       >
                         {taxOptions.map((opt) => (

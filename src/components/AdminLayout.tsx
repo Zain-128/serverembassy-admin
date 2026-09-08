@@ -16,6 +16,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useAuth } from "@/store/useAuth";
+import Logo from "@/components/Logo";
 
 const ALL = ["super_admin", "admin"];
 const CATALOG = [...ALL, "catalog"];
@@ -72,8 +73,8 @@ export default function AdminLayout() {
     <div className="grid min-h-screen grid-cols-[260px_1fr] bg-page">
       <aside className="flex flex-col bg-navy text-white">
         <div className="border-b border-white/10 px-5 py-5">
-          <p className="text-sm font-bold">Server Embassy</p>
-          <p className="text-xs text-white/60">Admin Console</p>
+          <Logo light />
+          <p className="mt-2 text-xs text-white/60">Admin Console</p>
         </div>
         <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-5">
           {visibleSections.map((section) => (

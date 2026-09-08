@@ -7,6 +7,7 @@ import {
   useGetBrandsQuery,
   useUpdateBrandMutation,
 } from "@/store/adminApi";
+import { useToast, getErrorMessage } from "@/components/Toast";
 
 export default function BrandsPage() {
   const [page, setPage] = useState(1);
@@ -18,12 +19,18 @@ export default function BrandsPage() {
   const [updateBrand] = useUpdateBrandMutation();
   const [deleteBrand] = useDeleteBrandMutation();
   const [name, setName] = useState("");
+  const { toast } = useToast();
 
   async function add(event: FormEvent) {
     event.preventDefault();
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    await createBrand({ slug, name, featured: true });
-    setName("");
+    try {
+      await createBrand({ slug, name, featured: true }).unwrap();
+      toast("Brand created", "success");
+      setName("");
+    } catch (err) {
+      toast(getErrorMessage(err, "Could not create brand"), "error");
+    }
   }
 
   return (
@@ -56,7 +63,12 @@ export default function BrandsPage() {
                       className="mr-1"
                       checked={brand.featured ?? false}
                       onChange={async (e) => {
-                        await updateBrand({ id: brand.id, body: { featured: e.target.checked } });
+                        try {
+                          await updateBrand({ id: brand.id, body: { featured: e.target.checked } }).unwrap();
+                          toast("Status updated", "success");
+                        } catch (err) {
+                          toast(getErrorMessage(err, "Could not update brand"), "error");
+                        }
                       }}
                     />
                     Featured on homepage
@@ -67,7 +79,12 @@ export default function BrandsPage() {
                   className="text-sm text-sale"
                   onClick={async () => {
                     if (!confirm("Delete this brand?")) return;
-                    await deleteBrand(brand.id);
+                    try {
+                      await deleteBrand(brand.id).unwrap();
+                      toast("Brand deleted", "success");
+                    } catch (err) {
+                      toast(getErrorMessage(err, "Could not delete brand"), "error");
+                    }
                   }}
                 >
                   Delete

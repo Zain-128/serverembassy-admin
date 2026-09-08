@@ -1,8 +1,10 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { Skeleton } from "@/components/Skeleton";
+import { useToast, getErrorMessage } from "@/components/Toast";
 import { useGetSettingsQuery, useUpdateSettingsMutation } from "@/store/adminApi";
 
 export default function SettingsPage() {
+  const { toast } = useToast();
   const { data: settings, isLoading } = useGetSettingsQuery();
   const [updateSettings] = useUpdateSettingsMutation();
 
@@ -16,11 +18,10 @@ export default function SettingsPage() {
   const [freeShippingLabel, setFreeShippingLabel] = useState("");
   const [taxRate, setTaxRate] = useState(0.07);
   const [currency, setCurrency] = useState("USD");
-  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (!settings) return;
-    setStoreName(settings.storeName ?? "Server Embassy");
+    setStoreName(settings.storeName ?? "Power Line Devices");
     setTagline(settings.tagline ?? "");
     setPhone(settings.phone ?? "");
     setEmail(settings.supportEmail ?? "");
@@ -34,20 +35,23 @@ export default function SettingsPage() {
 
   async function save(event: FormEvent) {
     event.preventDefault();
-    await updateSettings({
-      storeName,
-      tagline,
-      phone,
-      supportEmail: email,
-      address,
-      hours,
-      freeShippingThreshold: Number(freeShippingThreshold),
-      freeShippingLabel,
-      taxRate: Number(taxRate),
-      currency,
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    try {
+      await updateSettings({
+        storeName,
+        tagline,
+        phone,
+        supportEmail: email,
+        address,
+        hours,
+        freeShippingThreshold: Number(freeShippingThreshold),
+        freeShippingLabel,
+        taxRate: Number(taxRate),
+        currency,
+      }).unwrap();
+      toast("Settings saved", "success");
+    } catch (err) {
+      toast(getErrorMessage(err, "Could not save settings."), "error");
+    }
   }
 
   if (isLoading)
@@ -157,7 +161,6 @@ export default function SettingsPage() {
         <button type="submit" className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white">
           Save settings
         </button>
-        {saved ? <p className="text-sm text-brand">Saved.</p> : null}
       </form>
     </div>
   );

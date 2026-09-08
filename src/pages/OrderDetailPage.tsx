@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { formatMoney } from "@/lib/format";
 import { Skeleton } from "@/components/Skeleton";
+import { useToast, getErrorMessage } from "@/components/Toast";
 import {
   useAddShipmentMutation,
   useGetOrderQuery,
@@ -12,6 +13,7 @@ const statuses = ["pending", "processing", "shipped", "delivered", "cancelled", 
 
 export default function OrderDetailPage() {
   const { id } = useParams();
+  const { toast } = useToast();
   const { data: order, isLoading } = useGetOrderQuery(id!, { skip: !id });
   const [updateStatus] = useUpdateOrderStatusMutation();
   const [addShipment] = useAddShipmentMutation();
@@ -49,7 +51,12 @@ export default function OrderDetailPage() {
             className="mt-1 block rounded-lg border border-line px-3 py-2"
             value={order.status}
             onChange={async (e) => {
-              await updateStatus({ id: order.id, status: e.target.value });
+              try {
+                await updateStatus({ id: order.id, status: e.target.value }).unwrap();
+                toast("Order status updated", "success");
+              } catch (err) {
+                toast(getErrorMessage(err, "Could not update order status."), "error");
+              }
             }}
           >
             {statuses.map((s) => (
@@ -82,11 +89,16 @@ export default function OrderDetailPage() {
           className="mt-3 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white"
           onClick={async () => {
             if (!tracking.trim()) return;
-            await addShipment({
-              id: order.id,
-              carrier,
-              trackingNumber: tracking.trim(),
-            });
+            try {
+              await addShipment({
+                id: order.id,
+                carrier,
+                trackingNumber: tracking.trim(),
+              }).unwrap();
+              toast("Shipment added", "success");
+            } catch (err) {
+              toast(getErrorMessage(err, "Could not add shipment."), "error");
+            }
           }}
         >
           Save shipment

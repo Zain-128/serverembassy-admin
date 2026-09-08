@@ -8,6 +8,7 @@ import {
 } from "@/store/adminApi";
 import { TableSkeleton } from "@/components/Skeleton";
 import Pagination from "@/components/Pagination";
+import { useToast, getErrorMessage } from "@/components/Toast";
 
 export default function ProductsPage() {
   const [page, setPage] = useState(1);
@@ -21,12 +22,18 @@ export default function ProductsPage() {
   const { data: categoryRes } = useGetCategoriesQuery();
   const categories = categoryRes?.items ?? [];
   const [deleteProduct] = useDeleteProductMutation();
+  const { toast } = useToast();
   const items = data?.items ?? [];
   const totalPages = data?.totalPages ?? 1;
 
   async function remove(id: string) {
     if (!confirm("Delete this product?")) return;
-    await deleteProduct(id);
+    try {
+      await deleteProduct(id).unwrap();
+      toast("Product deleted", "success");
+    } catch (err) {
+      toast(getErrorMessage(err, "Could not delete product"), "error");
+    }
   }
 
   function handleSearch(e: React.FormEvent) {

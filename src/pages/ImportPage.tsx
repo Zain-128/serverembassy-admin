@@ -13,8 +13,8 @@ import {
 } from "lucide-react";
 import { useImportProductsMutation } from "@/store/adminApi";
 
-/** Max products imported per upload (matches Server Embassy feed sample size). */
-const IMPORT_ROW_LIMIT = 100;
+/** Chunk size for API calls — full CSV is imported, sent in batches. */
+const IMPORT_BATCH_SIZE = 200;
 
 /**
  * Exact Google Shopping / Server Embassy CSV headers
@@ -141,10 +141,10 @@ type CsvInfo = {
   fileSize: number;
   importRows: Record<string, string>[];
   skipped: number;
-  truncated: number;
   missingColumns: string[];
   header: string[];
   preview: string[][];
+  fieldIndex: Record<string, number>;
 };
 
 type ImportResult = {
@@ -159,12 +159,15 @@ export default function ImportPage() {
   const [error, setError] = useState<string>("");
   const [result, setResult] = useState<ImportResult | null>(null);
   const [dragOver, setDragOver] = useState(false);
-  const [importProducts, { isLoading }] = useImportProductsMutation();
+  const [importing, setImporting] = useState(false);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [importProducts] = useImportProductsMutation();
 
   function acceptFile(file: File | undefined | null) {
     if (!file) return;
     setError("");
     setResult(null);
+    setProgress(null);
 
     const isCsv =
       file.name.toLowerCase().endsWith(".csv") ||
@@ -184,9 +187,13 @@ export default function ImportPage() {
 
       const headerRow = parsed[0];
       const columns = headerRow.map(normalizeHeader);
+      const fieldIndex: Record<string, number> = {};
+      columns.forEach((field, i) => {
+        if (!(field in fieldIndex)) fieldIndex[field] = i;
+      });
       const indexOf = (field: string) => {
-        const i = columns.indexOf(field);
-        return i >= 0 ? i : undefined;
+        const i = fieldIndex[field];
+        return i != null ? i : undefined;
       };
 
       const missingRequired = REQUIRED_FIELDS.filter((field) => indexOf(field) == null);
@@ -200,10 +207,8 @@ export default function ImportPage() {
       const importRows: Record<string, string>[] = [];
       let skipped = 0;
       const dataRows = parsed.slice(1);
-      const limited = dataRows.slice(0, IMPORT_ROW_LIMIT);
-      const truncated = Math.max(0, dataRows.length - limited.length);
 
-      for (const cells of limited) {
+      for (const cells of dataRows) {
         const get = (field: string) => {
           const i = indexOf(field);
           if (i == null || i >= cells.length) return "";
@@ -217,7 +222,6 @@ export default function ImportPage() {
           continue;
         }
 
-        // Persist every feed field from the CSV (empty string if blank).
         const row: Record<string, string> = {};
         for (const field of FEED_FIELDS) {
           row[field] = get(field);
@@ -230,10 +234,10 @@ export default function ImportPage() {
         fileSize: file.size,
         importRows,
         skipped,
-        truncated,
-        missingColumns: OPTIONAL_FIELDS.filter((field) => !columns.includes(field)),
+        missingColumns: OPTIONAL_FIELDS.filter((field) => !(field in fieldIndex)),
         header: headerRow,
-        preview: limited.slice(0, 6),
+        preview: dataRows.slice(0, 8),
+        fieldIndex,
       });
     });
   }
@@ -242,6 +246,7 @@ export default function ImportPage() {
     setCsvInfo(null);
     setError("");
     setResult(null);
+    setProgress(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -265,16 +270,40 @@ export default function ImportPage() {
   }
 
   async function runImport() {
-    if (!csvInfo) return;
+    if (!csvInfo?.importRows.length) return;
     setError("");
     setResult(null);
+    setImporting(true);
+    const rows = csvInfo.importRows;
+    setProgress({ done: 0, total: rows.length });
+
+    let created = 0;
+    let updated = 0;
+    const errors: Array<{ sku: string; error: string }> = [];
+
     try {
-      const data = await importProducts(csvInfo.importRows).unwrap();
-      setResult(data);
+      for (let i = 0; i < rows.length; i += IMPORT_BATCH_SIZE) {
+        const chunk = rows.slice(i, i + IMPORT_BATCH_SIZE);
+        const data = await importProducts(chunk).unwrap();
+        created += data.created;
+        updated += data.updated;
+        errors.push(...data.errors);
+        setProgress({ done: Math.min(i + chunk.length, rows.length), total: rows.length });
+      }
+      setResult({ created, updated, errors });
     } catch {
-      setError("Import failed. Check CSV format and API connection.");
+      setError(
+        `Import failed after ${created + updated} products. Check API connection and try again.`,
+      );
+      if (created || updated || errors.length) {
+        setResult({ created, updated, errors });
+      }
+    } finally {
+      setImporting(false);
     }
   }
+
+  const isLoading = importing;
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -282,14 +311,13 @@ export default function ImportPage() {
         <div>
           <h1 className="text-2xl font-bold text-navy">Bulk upload products</h1>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-muted">
-            Upload a Google Shopping feed CSV (up to{" "}
-            <strong>{IMPORT_ROW_LIMIT} products</strong> per import). Every column is mapped into the
-            product — price, sale_price, brand, gtin, image_link, mpn, product_type, quantity, and more.
-            Matching{" "}
+            Upload a Google Shopping feed CSV — <strong>all products</strong> and{" "}
+            <strong>all columns</strong> are imported (price, sale_price, brand, gtin, image_link,
+            mpn, product_type, quantity, etc.). Matching{" "}
             <code className="rounded bg-brand-soft px-1 py-0.5 font-mono text-[12px] text-brand">
               id
             </code>{" "}
-            values update existing SKUs.
+            values update existing SKUs. Large files are sent in batches of {IMPORT_BATCH_SIZE}.
           </p>
         </div>
         <button
@@ -298,7 +326,7 @@ export default function ImportPage() {
           className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-line bg-white px-4 py-2 text-sm font-semibold text-navy shadow-sm transition hover:border-brand hover:text-brand"
         >
           <Download size={16} />
-          Download sample CSV (100)
+          Download sample CSV
         </button>
       </div>
 
@@ -338,7 +366,7 @@ export default function ImportPage() {
                 <span className="font-semibold text-brand underline-offset-2 hover:underline">
                   click to browse
                 </span>{" "}
-                — first {IMPORT_ROW_LIMIT} valid rows will be imported
+                — every valid row in the file will be imported
               </p>
             </div>
             <input
@@ -360,10 +388,9 @@ export default function ImportPage() {
                   <p className="truncate text-sm font-semibold text-navy">{csvInfo.fileName}</p>
                   <p className="text-xs text-muted">
                     {formatBytes(csvInfo.fileSize)} · {csvInfo.importRows.length} products ready
-                    {csvInfo.skipped ? ` · ${csvInfo.skipped} skipped` : ""}
-                    {csvInfo.truncated
-                      ? ` · ${csvInfo.truncated} extra rows ignored (limit ${IMPORT_ROW_LIMIT})`
-                      : ""}
+                    {csvInfo.skipped ? ` · ${csvInfo.skipped} skipped (missing id/title)` : ""}
+                    {" · "}
+                    {FEED_FIELDS.length} fields mapped
                   </p>
                 </div>
               </div>
@@ -384,10 +411,30 @@ export default function ImportPage() {
                   className="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark disabled:opacity-50"
                 >
                   {isLoading ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
-                  {isLoading ? "Importing…" : `Import ${csvInfo.importRows.length} products`}
+                  {isLoading
+                    ? progress
+                      ? `Importing ${progress.done}/${progress.total}…`
+                      : "Importing…"
+                    : `Import all ${csvInfo.importRows.length} products`}
                 </button>
               </div>
             </div>
+
+            {progress && isLoading ? (
+              <div className="mt-4">
+                <div className="h-2 overflow-hidden rounded-full bg-page ring-1 ring-line">
+                  <div
+                    className="h-full bg-brand transition-all"
+                    style={{
+                      width: `${Math.round((progress.done / Math.max(1, progress.total)) * 100)}%`,
+                    }}
+                  />
+                </div>
+                <p className="mt-1 text-xs text-muted">
+                  Uploaded {progress.done} of {progress.total} products
+                </p>
+              </div>
+            ) : null}
 
             <div className="mt-4 space-y-1.5">
               <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
@@ -431,54 +478,42 @@ export default function ImportPage() {
 
       {csvInfo && csvInfo.preview.length > 0 && (
         <section className="mt-4 rounded-2xl bg-white p-6 ring-1 ring-line">
-          <p className="text-sm font-semibold text-navy">Preview</p>
+          <p className="text-sm font-semibold text-navy">Preview — all mapped fields</p>
           <p className="mt-0.5 text-xs text-muted">
-            First {csvInfo.preview.length} row{csvInfo.preview.length > 1 ? "s" : ""} — mapped feed
-            fields
+            First {csvInfo.preview.length} rows · scroll sideways to see every column
           </p>
           <div className="mt-3 overflow-x-auto rounded-xl ring-1 ring-line">
-            <table className="w-full min-w-[64rem] text-left text-sm">
+            <table className="w-full min-w-[96rem] text-left text-sm">
               <thead className="bg-page text-xs uppercase tracking-wide text-muted">
                 <tr>
-                  {[
-                    "id",
-                    "title",
-                    "price",
-                    "salePrice",
-                    "brand",
-                    "productType",
-                    "quantity",
-                    "imageLink",
-                    "mpn",
-                    "gtin",
-                  ].map((h) => (
-                    <th key={h} className="whitespace-nowrap px-3 py-2 font-semibold">
-                      {h}
+                  {EXPECTED_COLUMNS.map(([csvName, field]) => (
+                    <th key={field} className="whitespace-nowrap px-3 py-2 font-semibold">
+                      {csvName}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-line bg-white">
                 {csvInfo.preview.map((cells, r) => {
-                  const header = csvInfo.header;
                   const get = (name: string) => {
-                    const raw = header.map(normalizeHeader).indexOf(name);
-                    return raw >= 0 && raw < cells.length ? cells[raw] || "—" : "—";
+                    const idx = csvInfo.fieldIndex[name];
+                    return idx != null && idx < cells.length ? cells[idx] || "—" : "—";
                   };
                   return (
                     <tr key={r}>
-                      <td className="px-3 py-2 font-mono text-xs text-navy">{get("id")}</td>
-                      <td className="max-w-[14rem] truncate px-3 py-2">{get("title")}</td>
-                      <td className="whitespace-nowrap px-3 py-2">{get("price")}</td>
-                      <td className="whitespace-nowrap px-3 py-2">{get("salePrice")}</td>
-                      <td className="px-3 py-2">{get("brand")}</td>
-                      <td className="px-3 py-2">{get("productType")}</td>
-                      <td className="px-3 py-2">{get("quantity")}</td>
-                      <td className="max-w-[10rem] truncate px-3 py-2 font-mono text-[11px]">
-                        {get("imageLink")}
-                      </td>
-                      <td className="px-3 py-2 font-mono text-xs">{get("mpn")}</td>
-                      <td className="px-3 py-2 font-mono text-xs">{get("gtin")}</td>
+                      {FEED_FIELDS.map((field) => (
+                        <td
+                          key={field}
+                          className={`px-3 py-2 ${
+                            field === "title" || field === "description" || field === "imageLink" || field === "link"
+                              ? "max-w-[12rem] truncate"
+                              : "whitespace-nowrap"
+                          } ${field === "id" || field === "mpn" || field === "gtin" ? "font-mono text-xs" : ""}`}
+                          title={get(field)}
+                        >
+                          {get(field)}
+                        </td>
+                      ))}
                     </tr>
                   );
                 })}
@@ -594,7 +629,7 @@ export default function ImportPage() {
             {[
               ["Use the sample CSV", "Headers match your Server Embassy feed file exactly."],
               ["All fields are saved", "Price, sale, images, GTIN, MPN, qty, category, etc."],
-              ["Limit 100 / upload", "Large feeds: import in batches of 100."],
+              ["All products import", "Full file is uploaded in batches — no 100-row cap."],
               ["id is the SKU", "Same id updates; new id creates."],
             ].map(([title, body], i) => (
               <li key={title} className="flex gap-3">

@@ -31,6 +31,7 @@ export default function CustomersPage() {
                   <th className="px-4 py-3">Company</th>
                   <th className="px-4 py-3">Email</th>
                   <th className="px-4 py-3">Orders</th>
+                  <th className="px-4 py-3">Invites</th>
                   <th className="px-4 py-3">Tax exempt</th>
                 </tr>
               </thead>
@@ -41,6 +42,15 @@ export default function CustomersPage() {
                     <td className="px-4 py-3">{customer.company || "—"}</td>
                     <td className="px-4 py-3">{customer.email}</td>
                     <td className="px-4 py-3">{customer.orderCount ?? 0}</td>
+                    <td className="px-4 py-3">
+                      {(customer.inviteCount ?? 0) > 0 ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-xs font-semibold text-brand">
+                          {customer.inviteCount}
+                        </span>
+                      ) : (
+                        <span className="text-muted">0</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <select
                         className="rounded-lg border border-line px-2 py-1"

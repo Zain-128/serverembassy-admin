@@ -106,6 +106,7 @@ export type ApiCustomer = {
   company?: string;
   taxExempt: string;
   orderCount?: number;
+  inviteCount?: number;
 };
 
 export type ApiSettings = {

@@ -52,10 +52,10 @@ export default function ProductsPage() {
           <p className="text-sm text-muted">Create, edit, and unpublish catalog SKUs.</p>
         </div>
         <div className="flex gap-2">
-          <Link to="/products/new" className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white">
-            Add product
+          <Link to="/products/new" className="btn btn-primary">
+            + Add product
           </Link>
-          <Link to="/products/import" className="rounded-lg border border-line bg-white px-4 py-2 text-sm font-semibold">
+          <Link to="/products/import" className="btn btn-outline">
             Bulk upload
           </Link>
         </div>
@@ -66,9 +66,9 @@ export default function ProductsPage() {
           placeholder="Search products…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          className="rounded-lg border border-line bg-white px-3 py-2 text-sm"
+          className="rounded-xl border border-line bg-white px-3.5 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
         />
-        <button type="submit" className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white">
+        <button type="submit" className="btn btn-primary">
           Search
         </button>
       </form>

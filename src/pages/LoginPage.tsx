@@ -55,7 +55,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="mt-5 w-full rounded-lg bg-brand py-2.5 font-semibold text-white disabled:opacity-60"
+          className="mt-5 btn btn-primary w-full"
         >
           {loading ? "Signing in…" : "Continue"}
         </button>

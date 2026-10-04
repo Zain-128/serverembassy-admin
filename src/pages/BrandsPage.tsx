@@ -44,7 +44,7 @@ export default function BrandsPage() {
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
-        <button type="submit" className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white">
+        <button type="submit" className="btn btn-primary">
           Add brand
         </button>
       </form>

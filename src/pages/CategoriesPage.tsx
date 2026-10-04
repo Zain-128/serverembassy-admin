@@ -72,7 +72,7 @@ export default function CategoriesPage() {
           <input type="checkbox" checked={homepage} onChange={(e) => setHomepage(e.target.checked)} />
           Show on homepage
         </label>
-        <button type="submit" className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white">
+        <button type="submit" className="btn btn-primary">
           Create
         </button>
       </form>

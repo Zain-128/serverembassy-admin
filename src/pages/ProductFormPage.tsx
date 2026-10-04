@@ -281,7 +281,7 @@ export default function ProductFormPage() {
       <button
         type="submit"
         disabled={saving}
-        className="mt-4 rounded-lg bg-brand px-5 py-2.5 font-semibold text-white disabled:opacity-60"
+        className="mt-6 btn btn-primary"
       >
         {saving ? "Saving…" : "Save product"}
       </button>

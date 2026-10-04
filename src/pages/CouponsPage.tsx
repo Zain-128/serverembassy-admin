@@ -192,10 +192,7 @@ export default function CouponsPage() {
             Active
           </label>
           <div className="flex gap-2 pt-1">
-            <button
-              type="submit"
-              className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white"
-            >
+            <button type="submit" className="btn btn-primary">
               {editingId ? "Save changes" : "Create coupon"}
             </button>
             {editingId ? (
@@ -205,7 +202,7 @@ export default function CouponsPage() {
                   setForm(emptyForm);
                   setEditingId(null);
                 }}
-                className="rounded-lg border border-line px-4 py-2 text-sm"
+                className="btn btn-outline"
               >
                 Cancel
               </button>

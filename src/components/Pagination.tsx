@@ -29,16 +29,16 @@ export default function Pagination({
           type="button"
           onClick={() => onChange(page - 1)}
           disabled={page <= 1}
-          className="inline-flex items-center gap-1 rounded-lg border border-line bg-white px-3 py-1.5 text-sm font-medium hover:border-brand/50 hover:text-brand disabled:cursor-not-allowed disabled:opacity-40"
+          className="btn btn-outline btn-sm disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <ChevronLeft size={15} /> Prev
         </button>
-        <span className="text-sm text-muted tabular-nums">{page}</span>
+        <span className="text-sm font-semibold text-navy tabular-nums">{page}</span>
         <button
           type="button"
           onClick={() => onChange(page + 1)}
           disabled={page >= totalPages}
-          className="inline-flex items-center gap-1 rounded-lg border border-line bg-white px-3 py-1.5 text-sm font-medium hover:border-brand/50 hover:text-brand disabled:cursor-not-allowed disabled:opacity-40"
+          className="btn btn-outline btn-sm disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Next <ChevronRight size={15} />
         </button>

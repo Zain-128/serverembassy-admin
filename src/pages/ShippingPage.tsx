@@ -58,7 +58,7 @@ export default function ShippingPage() {
           />
         </label>
         <p className="mt-2 text-sm text-muted">Current saved value: {formatMoney(saved)}</p>
-        <button type="submit" className="mt-4 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white">
+        <button type="submit" className="mt-4 btn btn-primary">
           Save rule
         </button>
       </form>

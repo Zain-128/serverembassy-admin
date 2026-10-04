@@ -70,7 +70,7 @@ export default function PagesPage() {
             className="mt-1 rounded-lg border border-line px-3 py-2"
           />
         </label>
-        <button type="submit" className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white">
+        <button type="submit" className="btn btn-primary">
           Create page
         </button>
       </form>

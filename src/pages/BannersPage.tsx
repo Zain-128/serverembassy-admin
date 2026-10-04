@@ -75,7 +75,7 @@ export default function BannersPage() {
             </option>
           ))}
         </select>
-        <button type="submit" className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white">
+        <button type="submit" className="btn btn-primary">
           Add banner
         </button>
       </form>

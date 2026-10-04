@@ -323,7 +323,7 @@ export default function ImportPage() {
         <button
           type="button"
           onClick={downloadSample}
-          className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-line bg-white px-4 py-2 text-sm font-semibold text-navy shadow-sm transition hover:border-brand hover:text-brand"
+          className="btn btn-outline shrink-0"
         >
           <Download size={16} />
           Download sample CSV
@@ -399,7 +399,7 @@ export default function ImportPage() {
                   type="button"
                   onClick={resetSelection}
                   disabled={isLoading}
-                  className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-4 py-2 text-sm font-semibold text-muted transition hover:text-navy disabled:opacity-50"
+                  className="btn btn-outline"
                 >
                   <RefreshCw size={15} />
                   Choose another
@@ -408,7 +408,7 @@ export default function ImportPage() {
                   type="button"
                   onClick={runImport}
                   disabled={isLoading || csvInfo.importRows.length === 0}
-                  className="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark disabled:opacity-50"
+                  className="btn btn-primary"
                 >
                   {isLoading ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
                   {isLoading

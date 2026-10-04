@@ -158,7 +158,7 @@ export default function SettingsPage() {
             onChange={(e) => setFreeShippingLabel(e.target.value)}
           />
         </label>
-        <button type="submit" className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white">
+        <button type="submit" className="btn btn-primary">
           Save settings
         </button>
       </form>

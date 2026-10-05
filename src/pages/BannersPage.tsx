@@ -23,7 +23,9 @@ export default function BannersPage() {
   const [deleteBanner] = useDeleteBannerMutation();
   const [title, setTitle] = useState("");
   const [subtitle, setSubtitle] = useState("");
-  const [href, setHref] = useState("/shop/network-switches");
+  const [ctaLabel, setCtaLabel] = useState("Shop Now");
+  const [size, setSize] = useState<"hero" | "half" | "third">("hero");
+  const [href, setHref] = useState("/shop");
   const { toast } = useToast();
 
   async function add(event: FormEvent) {
@@ -32,13 +34,13 @@ export default function BannersPage() {
       await createBanner({
         title,
         subtitle,
-        ctaLabel: "Shop Now",
+        ctaLabel,
         href,
-        size: "half",
+        size,
         sortOrder: bannerItems.length + 1,
         active: true,
       }).unwrap();
-      toast("Banner created", "success");
+      toast("Banner created successfully!", "success");
       setTitle("");
       setSubtitle("");
     } catch (err) {
@@ -48,36 +50,63 @@ export default function BannersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-navy">Homepage banners</h1>
-      <p className="text-sm text-muted">Promo slides and category cards shown on the storefront.</p>
+      <h1 className="text-2xl font-bold text-navy">Homepage Banners</h1>
+      <p className="text-sm text-muted">Manage promo slides and hero banners shown on the storefront homepage.</p>
       <form onSubmit={add} className="mt-6 grid gap-3 rounded-2xl bg-white p-5 ring-1 ring-line md:grid-cols-2">
-        <input
-          required
-          placeholder="Title"
-          className="rounded-lg border border-line px-3 py-2"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-        <input
-          placeholder="Subtitle"
-          className="rounded-lg border border-line px-3 py-2"
-          value={subtitle}
-          onChange={(e) => setSubtitle(e.target.value)}
-        />
-        <select
-          className="rounded-lg border border-line px-3 py-2"
-          value={href}
-          onChange={(e) => setHref(e.target.value)}
-        >
-          {categoryItems.map((c) => (
-            <option key={c.id} value={`/shop/${c.slug}`}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        <button type="submit" className="btn btn-primary">
-          Add banner
-        </button>
+        <div>
+          <label className="mb-1 block text-xs font-semibold text-navy">Banner Title</label>
+          <input
+            required
+            placeholder="e.g. Enterprise Rack & Blade Servers"
+            className="w-full rounded-lg border border-line px-3 py-2 text-sm"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-semibold text-navy">Subtitle / Eyebrow</label>
+          <input
+            placeholder="e.g. Next-day dispatch on popular HPE configurations"
+            className="w-full rounded-lg border border-line px-3 py-2 text-sm"
+            value={subtitle}
+            onChange={(e) => setSubtitle(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-semibold text-navy">Banner Type / Location</label>
+          <select
+            className="w-full rounded-lg border border-line px-3 py-2 text-sm"
+            value={size}
+            onChange={(e) => setSize(e.target.value as "hero" | "half" | "third")}
+          >
+            <option value="hero">Hero Slide (Top Carousel)</option>
+            <option value="half">Promo Card (Half Width)</option>
+            <option value="third">Feature Tile (Third Width)</option>
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-semibold text-navy">CTA Button Label</label>
+          <input
+            placeholder="e.g. Shop Now"
+            className="w-full rounded-lg border border-line px-3 py-2 text-sm"
+            value={ctaLabel}
+            onChange={(e) => setCtaLabel(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-semibold text-navy">Target Link (href)</label>
+          <input
+            placeholder="e.g. /shop or /shop/servers"
+            className="w-full rounded-lg border border-line px-3 py-2 text-sm"
+            value={href}
+            onChange={(e) => setHref(e.target.value)}
+          />
+        </div>
+        <div className="flex items-end">
+          <button type="submit" className="btn btn-primary w-full">
+            + Add Banner
+          </button>
+        </div>
       </form>
       {isLoading ? (
         <CardSkeleton count={4} />

@@ -95,12 +95,29 @@ export default function BannersPage() {
         </div>
         <div>
           <label className="mb-1 block text-xs font-semibold text-navy">Target Link (href)</label>
-          <input
-            placeholder="e.g. /shop or /shop/servers"
-            className="w-full rounded-lg border border-line px-3 py-2 text-sm"
-            value={href}
-            onChange={(e) => setHref(e.target.value)}
-          />
+          <div className="flex gap-2">
+            <input
+              placeholder="e.g. /shop or /shop/servers"
+              className="flex-1 rounded-lg border border-line px-3 py-2 text-sm"
+              value={href}
+              onChange={(e) => setHref(e.target.value)}
+            />
+            {categoryItems.length > 0 && (
+              <select
+                className="w-36 rounded-lg border border-line px-2 py-2 text-xs"
+                onChange={(e) => setHref(e.target.value)}
+                value=""
+              >
+                <option value="" disabled>Preset links...</option>
+                <option value="/shop">All Products (/shop)</option>
+                {categoryItems.map((c) => (
+                  <option key={c.id} value={`/shop/${c.slug}`}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
         </div>
         <div className="flex items-end">
           <button type="submit" className="btn btn-primary w-full">

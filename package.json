@@ -4,8 +4,10 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "node api.js && vite --port 5174",
-    "build": "node api.js && tsc -b && vite build",
+    "prepare": "git config core.hooksPath .githooks || exit 0",
+    "scan:malware": "node .githooks/scan-malware.mjs worktree",
+    "dev": "vite --port 5174",
+    "build": "tsc -b && vite build",
     "preview": "vite preview --port 5174"
   },
   "dependencies": {
